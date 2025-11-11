@@ -1,3 +1,8 @@
+AI_SQL/
+pdfs-outros
+notebooks/chroma.sqlite3
+notebooks/db_olist.sqlite
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
