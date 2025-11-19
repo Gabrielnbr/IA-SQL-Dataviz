@@ -1,0 +1,30 @@
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+from my_vanna_class import MyVanna  # sua função que instancia o Vanna
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s [%(name)s]: %(message)s"
+)
+
+def init_vanna():
+    vn = MyVanna.vanna_configs()
+    
+    if vn is None:
+        raise RuntimeError("Não foi possível Inicializar o Vanna")
+    
+    if not vn.esta_treinado():
+        vn.tratamento_init()
+        logging.info("Treinamento encerrado com sucesso")
+
+@asynccontextmanager
+async def on_startup(app: FastAPI):
+    init_vanna()
+    yield
+
+app = FastAPI(lifespan=on_startup)
+
+if __name__ == "__main__":
+    init_vanna()
