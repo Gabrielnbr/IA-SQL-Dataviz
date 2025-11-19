@@ -10,6 +10,13 @@ import os
 
 log = logging.getLogger(__name__)
 
+# === Caminhos base, independentes de onde o app roda (local/Render) ===
+BASE_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = BASE_DIR.parent
+DATA_DIR = BACKEND_DIR / "data"
+TRAIN_DIR = BACKEND_DIR / "arquivos_treinamento"
+DB_OLIST_PATH = DATA_DIR / "db_olist.sqlite"
+
 class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
     def __init__(self, config=None):
         
@@ -20,14 +27,14 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
         OpenAI_Chat.__init__(self, config=config)
         self.client = OpenAI(api_key=config['openai']['api_key'])
         
-        self.path_arquivos_treinamento = "src/backend/arquivos_treinamento"
+        self.path_arquivos_treinamento = str(TRAIN_DIR)
         self.nome_arquivo_ddl = "consulta_ddl.pkl"
         self.nome_arquivo_qa = "qa.pkl"
         self.nome_arquivo_docs = "documentations.pkl"
         self.nome_arquivo_prompt = "prompt.pkl"
         
         self.model_name = "gpt-3.5-turbo"
-        self.set_db_path = "src/backend/data"
+        self.set_db_path = str(DATA_DIR)
         self.chroma_dir = "chroma.sqlite3"
         self.bd_path = "db_olist.sqlite"
     
@@ -201,7 +208,7 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
             Retorna a instância inicializada do MyVanna ou None em caso de falha.
         """
         mn   = "gpt-3.5-turbo"    if model_name  is None else model_name
-        sdbp = "src/backend/data" if set_db_path is None else set_db_path
+        sdbp = str(DATA_DIR)      if set_db_path is None else set_db_path
         cd   = "chroma.sqlite3"   if chroma_dir  is None else chroma_dir
         bdp  = "db_olist.sqlite"  if bd_path     is None else bd_path
         
