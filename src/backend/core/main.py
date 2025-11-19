@@ -10,6 +10,7 @@ logging.basicConfig(
 )
 
 def init_vanna():
+    global vn
     vn = MyVanna.vanna_configs()
     
     if vn is None:
@@ -25,6 +26,14 @@ async def on_startup(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=on_startup)
+
+@app.post('/pergunta', response_model= str)
+def pesquisa(pergunta: str):
+    try:
+        sql = vn.generate_sql(question = pergunta)
+        return sql
+    except Exception as e:
+        logging.exception(f"Erro Inesperado: {e}")
 
 if __name__ == "__main__":
     init_vanna()
