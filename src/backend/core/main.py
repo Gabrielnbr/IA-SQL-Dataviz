@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from .my_vanna_class import MyVanna  # sua função que instancia o Vanna
+from my_vanna_class import MyVanna  # sua função que instancia o Vanna
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,3 +37,7 @@ def pesquisa(pergunta: str):
 
 if __name__ == "__main__":
     init_vanna()
+    
+    #pergunta = "Qual o valor médio de compra dos clientes por mês?"
+    
+    #pesquisa(pergunta)
