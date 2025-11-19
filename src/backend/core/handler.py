@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI
-from my_vanna_class import MyVanna
+from .my_vanna_class import MyVanna
 
 vn = MyVanna.vanna_configs()
 app = FastAPI()

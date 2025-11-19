@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from my_vanna_class import MyVanna  # sua função que instancia o Vanna
+from .my_vanna_class import MyVanna  # sua função que instancia o Vanna
 
 logging.basicConfig(
     level=logging.INFO,
