@@ -1,7 +1,7 @@
 import json
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, request
+from fastapi import FastAPI, Request
 
 from .my_vanna_class import MyVanna  # sua função que instancia o Vanna
 
@@ -28,10 +28,10 @@ async def on_startup(app: FastAPI):
 
 app = FastAPI(lifespan=on_startup)
 
-@app.post('/pergunta', response_model= json)
-def pesquisa(pergunta: json):
+@app.post('/pergunta')
+async def pesquisa(request: Request):
     try:
-        body = request.json()
+        body = await request.json()
         pergunta = body.get("pergunta")
         
         sql = vn.generate_sql(question = pergunta)
