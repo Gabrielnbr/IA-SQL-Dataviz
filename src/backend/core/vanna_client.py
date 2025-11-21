@@ -1,16 +1,8 @@
 import os
 import logging
 from typing import Optional
-from my_vanna_class import MyVanna
+from .my_vanna_class import MyVanna
 
-# TODO: Mover a configuração do log para o inicializador init.py
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s [%(name)s]: %(message)s"
-)
-
-# 1. Código funcional? OK
-# 2. Garantir verificabilidade dos erros? Ok
 def vanna_init(model_name: str = "gpt-3.5-turbo",
                set_db_path: str = "src\data",
                chroma_dir: str = "chroma-db",

@@ -37,8 +37,7 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
         self.set_db_path = str(DATA_DIR)
         self.chroma_dir = "chroma.sqlite3"
         self.bd_path = "db_olist.sqlite"
-    
-        
+
     def leitura_arquivos_treinamento(self,
                                     nome_arquivo: str,
                                     path_arquivo: str
@@ -181,7 +180,7 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
 
         except Exception as e:
             log.exception(f"Erro desconhecido no treinamento: {e}")
-    
+
     @classmethod
     def vanna_configs(cls,
                         model_name: str | None = None,
@@ -245,7 +244,7 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
         except Exception as e:
             log.error(f"Falha inesperada ao inicializar o Vanna: {e}", exc_info=True)
         return None
-    
+
     def esta_treinado(self):
         
         try:
