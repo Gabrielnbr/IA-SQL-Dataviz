@@ -19,19 +19,23 @@ def front():
         if not pergunta:
             st.warning("Digite uma pergunta válida.")
         else:
-            try:
-                payload = {"pergunta":pergunta}
-                response = requests.post(api_url, json = payload)
-                response.raise_for_status()
-                
-                st.success("Sucesso!")
-                st.write("Resposta da API:")
-                st.json(response.json()) # Mostra o JSON formatado
+            with st.spinner("Consultando a API..."):
+                try:
+                    payload = {"pergunta":pergunta}
+                    response = requests.post(api_url, json = payload)
+                    response.raise_for_status()
                     
-            except requests.exceptions.HTTPError as err:
-                st.error(f"Erro na requisição: {err}")
-            except Exception as e:
-                st.error(f"Ocorreu um erro inesperado: {e}")
+                    sql_bruto = response.text
+                    sql_limpo = sql_bruto.strip('"').replace('\\n', '\n').replace('\\', '')
+                    
+                    st.success("Sucesso!")
+                    st.write("Resposta da API:")
+                    st.code(sql_limpo, language='sql')
+                    
+                except requests.exceptions.HTTPError as err:
+                    st.error(f"Erro na requisição: {err}")
+                except Exception as e:
+                    st.error(f"Ocorreu um erro inesperado: {e}")
 
 if __name__ == "__main__":
     front()
