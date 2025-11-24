@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 
 api_url = "https://ia-sql-dataviz.onrender.com/pergunta"
+st.set_page_config(layout="wide")
 
 def front():
     
