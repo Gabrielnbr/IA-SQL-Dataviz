@@ -66,8 +66,6 @@ Apoio conceitual do planejamento:
     │
     ├── references         <- Planejamento e material de suporte desenvolvido.
     │
-    ├── requirements.txt
-    │
     ├── src                <- Source code for use in this project.
     │   ├── backend/
     │   │   ├── arquivos_treinamento/
@@ -88,7 +86,7 @@ Apoio conceitual do planejamento:
     │       ├── streamlit.py            # Interface do usuário
     |       └── requirements.txt        # Requirementes exclusivo para o frontend
     ├── LICENSE
-    └── README.MD
+    └── README.md
 
 ---
 
@@ -177,6 +175,8 @@ Mitigações definidas no planejamento:
 - Implementar controle de acesso (Auth + Roles)
 - Adicionar “auto-refine” para melhorar SQL antes da execução
 - Criar um worker para cache de consultas frequentes
+
+---
 
 # Sobre mim
 

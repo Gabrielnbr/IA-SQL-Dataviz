@@ -40,8 +40,6 @@ def front():
                 2. Depois aperte no botão enviar e aguarde pela sua resposta."""
                 )
     
-    st.markdown("Faça o ranking dos 10 melhores vendedores por valor total de venda?")
-    
     pergunta = st.text_input("Digite sua Pergunta")
     
     if st.button("Enviar mensagem"):
