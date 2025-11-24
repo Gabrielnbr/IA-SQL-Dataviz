@@ -10,22 +10,51 @@ def vanna_init(model_name: str = "gpt-3.5-turbo",
                ) -> Optional[MyVanna]:
     
     """
-    Inicializa a instância do MyVanna com configuração padrão e conexão ao SQLite.
+    Inicializa e retorna uma instância configurada de ``MyVanna``.
+
+    Este helper centraliza a lógica de criação da instância do ``MyVanna``,
+    incluindo:
+
+    - Leitura da variável de ambiente ``OPENAI_API_KEY``;
+    - Definição de modelo, caminhos de dados e diretório do Chroma;
+    - Criação da instância por meio de ``MyVanna.vanna_configs(...)``;
+    - Tratamento básico de erros com logging.
 
     Parameters
     ----------
-    model_name : str
-        Nome do modelo OpenAI a ser usado (default: gpt-3.5-turbo)
-    chroma_dir : str
-        Diretório de persistência do banco vetorial Chroma.
-    bd_path : str
-        Caminho do banco SQLite local.
+    model_name : str, optional
+        Nome do modelo OpenAI a ser utilizado na geração de texto/SQL.
+        Por padrão, ``"gpt-3.5-turbo"``.
+    set_db_path : str, optional
+        Caminho base do diretório de dados onde se encontram:
+        - O arquivo de banco SQLite (``bd_path``);
+        - Os artefatos do ChromaDB (quando aplicável).
+        Default: ``"src\\data"``.
+    chroma_dir : str, optional
+        Diretório de persistência do banco vetorial ChromaDB.
+        Pode ser um nome de pasta ou caminho relativo a ``set_db_path``.
+        Default: ``"chroma-db"``.
+    bd_path : str, optional
+        Caminho (relativo ou absoluto) para o arquivo de banco SQLite a ser
+        utilizado pelo Vanna. Default: ``"\\db_olist.sqlite"``.
 
     Returns
     -------
-    MyVanna | None
-        Retorna a instância inicializada do MyVanna ou None em caso de falha.
+    MyVanna or None
+        - Instância de ``MyVanna`` já conectada ao SQLite e ao Chroma, em caso
+          de sucesso.
+        - ``None`` se ocorrer algum erro crítico durante a inicialização.
+
+    Notes
+    -----
+    - Erros de ambiente (por exemplo, ausência de ``OPENAI_API_KEY``),
+      problemas de caminho de banco de dados ou falhas inesperadas são
+      registrados no log e fazem a função retornar ``None``.
+    - Esta função é um wrapper conveniente em torno de
+      ``MyVanna.vanna_configs(...)``, ideal para ser usada em pontos de
+      entrada da aplicação (por exemplo, em ``main.py`` ou scripts de teste).
     """
+    
     try:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:

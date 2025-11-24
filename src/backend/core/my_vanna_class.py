@@ -18,7 +18,47 @@ TRAIN_DIR = BACKEND_DIR / "arquivos_treinamento"
 DB_OLIST_PATH = DATA_DIR / "db_olist.sqlite"
 
 class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
+    
+    """
+    Classe principal de integração entre o Vanna, o banco vetorial Chroma
+    e a API da OpenAI.
+
+    Esta classe herda de `ChromaDB_VectorStore` e `OpenAI_Chat`, fornecendo
+    métodos utilitários para:
+
+    - Ler arquivos de treinamento (DDL, Q&A, documentação e prompt);
+    - Treinar o Vanna com diferentes tipos de dados;
+    - Configurar o prompt SQL padrão;
+    - Orquestrar o processo de inicialização e treinamento;
+    - Verificar se a base vetorial já foi treinada;
+    - Conectar ao banco SQLite configurado.
+
+    A instância deve ser inicializada com um dicionário de configuração
+    contendo, no mínimo, as chaves `openai.api_key`, `openai.model`,
+    `path` e `chroma.persist_directory`.
+    """
+    
     def __init__(self, config=None):
+        
+        """
+        Inicializa a instância do MyVanna com as configurações fornecidas.
+
+        Parameters
+        ----------
+        config : dict
+            Dicionário de configuração contendo parâmetros para conexão
+            com a OpenAI e com o ChromaDB. Deve incluir, por exemplo:
+            - ``config['openai']['api_key']``: chave da API OpenAI;
+            - ``config['openai']['model']``: modelo a ser utilizado;
+            - ``config['path']``: diretório base de dados;
+            - ``config['chroma']['persist_directory']``: diretório de
+              persistência do banco vetorial Chroma.
+
+        Raises
+        ------
+        ValueError
+            Se `config` for None.
+        """
         
         if config is None:
             raise ValueError("config não pode ser None. Use MyVanna.vanna_configs() para criar a instância ou passe a config dentro dos parâmetros de inicialização.")
@@ -42,6 +82,38 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
                                     nome_arquivo: str,
                                     path_arquivo: str
                                     ):
+        
+        """
+        Lê um arquivo de treinamento serializado (pickle) e retorna seu conteúdo.
+
+        Parameters
+        ----------
+        nome_arquivo : str
+            Nome do arquivo de treinamento (por exemplo, ``'qa.pkl'``).
+        path_arquivo : str
+            Caminho do diretório onde o arquivo está armazenado.
+
+        Returns
+        -------
+        Any
+            Objeto desserializado a partir do arquivo (por exemplo,
+            uma lista de dicionários, uma string SQL, uma lista de textos, etc.).
+
+        Raises
+        ------
+        FileNotFoundError
+            Se o arquivo não for encontrado no caminho informado.
+        ValueError
+            Se o arquivo for lido, mas estiver vazio ou com conteúdo inválido.
+        Exception
+            Para erros inesperados de leitura ou desserialização.
+
+        Notes
+        -----
+        - O método assume que o arquivo foi serializado com `pickle.dump`.
+        - Em caso de erro, a exceção é registrada no log e `None` é retornado.
+        """
+        
         try:
             full_path = Path(path_arquivo) / nome_arquivo
             
@@ -67,10 +139,38 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
     def treinar_ddl(self,
                     ddl_sql: str | None = None
                     ) -> None:
+        
         """
         Treina o Vanna com os DDLs das tabelas do SQLite.
-        Retorna a contagem de objetos treinados.
+
+        Parameters
+        ----------
+        ddl_sql : str, optional
+            Comando SQL que retorna um DataFrame com a coluna ``sql``
+            contendo os DDLs das tabelas (por exemplo, uma consulta
+            em ``sqlite_master``). Se for None, o método lança um erro.
+
+        Returns
+        -------
+        None
+            O resultado do treinamento é registrado no banco vetorial
+            interno, sem retorno explícito.
+
+        Raises
+        ------
+        ValueError
+            Se `ddl_sql` for None.
+        Exception
+            Para erros inesperados durante a execução do SQL ou do treino.
+
+        Notes
+        -----
+        - O método executa `self.run_sql(ddl_sql)` e espera que o DataFrame
+          resultante possua uma coluna chamada ``'sql'``.
+        - Cada DDL não vazio é enviado individualmente para
+          `self.train(ddl=ddl)`.
         """
+        
         try:
             if ddl_sql is None:
                 raise ValueError("Não foi passado nenhuma query para treinamento")
@@ -94,6 +194,32 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
                 qa: List[Dict[str,str]]
                 ) -> None:
         
+        """
+        Treina o Vanna com pares de pergunta e SQL (Q&A).
+
+        Parameters
+        ----------
+        qa : list of dict
+            Lista de dicionários, onde cada item deve conter as chaves:
+            - ``'question'``: texto da pergunta em linguagem natural;
+            - ``'sql'``: consulta SQL correspondente.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            Se `qa` for None.
+        Exception
+            Para erros inesperados durante o treinamento.
+
+        Notes
+        -----
+        - Cada item da lista é enviado para `self.train(question=..., sql=...)`.
+        """
+        
         try:
             if qa is None:
                 raise ValueError("O 'qa' passado não corresponde ao valor esperado: 'List[Dict[str,str]]'")
@@ -108,6 +234,32 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
     def treinar_doc(self,
                     docs: List | None = None
                     ) -> None:
+        
+        """
+        Treina o Vanna com documentação textual livre.
+
+        Parameters
+        ----------
+        docs : list, optional
+            Lista de textos (strings) com descrições, documentação de tabelas,
+            explicações de negócio, etc. Se for None, o método lança um erro.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            Se `docs` for None.
+        Exception
+            Para erros inesperados durante o treinamento.
+
+        Notes
+        -----
+        - Cada item da lista é enviado para `self.train(documentation=doc)`.
+        """
+        
         try:
             if docs is None:
                 raise ValueError("O 'docs' passado não corresponde ao valor esperado: 'List'")
@@ -122,6 +274,29 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
     def definir_prompt(self,
                     prompt: str
                     ) -> None:
+        
+        """
+        Define o prompt padrão utilizado na geração de SQL pelo Vanna.
+
+        Parameters
+        ----------
+        prompt : str
+            Texto do prompt a ser utilizado como preâmbulo na geração de SQL.
+            Normalmente contém instruções de estilo, regras de negócio e
+            contexto sobre o banco de dados.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            Se `prompt` for None.
+        Exception
+            Para erros inesperados ao atualizar a configuração.
+        """
+        
         try:
             if prompt is None:
                 raise ValueError("O 'docs' passado não corresponde ao valor esperado: 'str'")
@@ -138,6 +313,48 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
                         nome_arquivo_docs: str | None = None,
                         nome_arquivo_prompt: str | None = None,
                     ) -> None:
+        
+        """
+        Orquestra o fluxo completo de treinamento inicial do Vanna.
+
+        Este método:
+        1. Lê os arquivos de DDL, Q&A, documentação e prompt (pkl),
+           usando `leitura_arquivos_treinamento`;
+        2. Chama os métodos de treinamento correspondentes:
+           `treinar_ddl`, `treinar_qa`, `treinar_doc` e `definir_prompt`.
+
+        Parameters
+        ----------
+        path_arquivos_treinamento : str, optional
+            Caminho base onde os arquivos de treinamento estão armazenados.
+            Se None, utiliza `self.path_arquivos_treinamento`.
+        nome_arquivo_ddl_sql : str, optional
+            Nome do arquivo com a query de DDL (pickle). Se None, utiliza
+            `self.nome_arquivo_ddl`.
+        nome_arquivo_qa : str, optional
+            Nome do arquivo com os pares pergunta-SQL (pickle). Se None,
+            utiliza `self.nome_arquivo_qa`.
+        nome_arquivo_docs : str, optional
+            Nome do arquivo com a lista de documentações (pickle). Se None,
+            utiliza `self.nome_arquivo_docs`.
+        nome_arquivo_prompt : str, optional
+            Nome do arquivo com o prompt padrão (pickle). Se None,
+            utiliza `self.nome_arquivo_prompt`.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception
+            Para erros inesperados no processo de leitura ou treinamento.
+
+        Notes
+        -----
+        - Caso algum dos nomes de arquivo seja definido como None explicitamente,
+          a etapa correspondente é simplesmente ignorada.
+        """
         
         path       = self.path_arquivos_treinamento if path_arquivos_treinamento is None else path_arquivos_treinamento
         nome_ddl   = self.nome_arquivo_ddl          if nome_arquivo_ddl_sql      is None else nome_arquivo_ddl_sql
@@ -190,22 +407,46 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
                         ) -> None:
     
         """
-        Inicializa a instância do MyVanna com configuração padrão e conexão ao SQLite.
+        Cria e inicializa uma instância de ``MyVanna`` com configuração padrão,
+        conectando ao SQLite e ao banco vetorial Chroma.
 
         Parameters
         ----------
-        model_name : str
-            Nome do modelo OpenAI a ser usado (default: gpt-3.5-turbo)
-        chroma_dir : str
-            Diretório de persistência do banco vetorial Chroma.
-        bd_path : str
-            Caminho do banco SQLite local.
+        model_name : str, optional
+            Nome do modelo OpenAI a ser usado.
+            Default: ``"gpt-3.5-turbo"``.
+        set_db_path : str, optional
+            Caminho base do diretório de dados (onde está o SQLite e o Chroma).
+            Default: diretório `DATA_DIR`.
+        chroma_dir : str, optional
+            Nome ou caminho do diretório de persistência do ChromaDB.
+            Default: ``"chroma.sqlite3"``.
+        bd_path : str, optional
+            Nome do arquivo de banco SQLite local.
+            Default: ``"db_olist.sqlite"``.
 
         Returns
         -------
-        MyVanna | None
-            Retorna a instância inicializada do MyVanna ou None em caso de falha.
+        MyVanna or None
+            Instância já conectada ao SQLite e configurada para uso
+            com o ChromaDB, ou None em caso de falha.
+
+        Raises
+        ------
+        EnvironmentError
+            Se a variável de ambiente ``OPENAI_API_KEY`` não estiver definida.
+        FileNotFoundError
+            Se o arquivo de banco de dados SQLite não for encontrado.
+        Exception
+            Para outros erros inesperados.
+
+        Notes
+        -----
+        - Este método de classe é o ponto de entrada recomendado para criar
+          a instância em produção.
+        - A conexão com o SQLite é feita via `vn.connect_to_sqlite(url=...)`.
         """
+        
         mn   = "gpt-3.5-turbo"    if model_name  is None else model_name
         sdbp = str(DATA_DIR)      if set_db_path is None else set_db_path
         cd   = "chroma.sqlite3"   if chroma_dir  is None else chroma_dir
@@ -246,6 +487,33 @@ class MyVanna( ChromaDB_VectorStore, OpenAI_Chat):
         return None
 
     def esta_treinado(self):
+        
+        """
+        Verifica se a base vetorial do Vanna já foi treinada.
+
+        A verificação é feita em dois passos:
+
+        1. Confere se o arquivo/diretório de persistência do Chroma existe;
+        2. Confere se o diretório base de dados (`self.set_db_path`) contém
+           exatamente 5 itens (heurística definida para indicar que o
+           treinamento já ocorreu).
+
+        Returns
+        -------
+        bool
+            ``True`` se a base de treinamento for considerada existente e
+            completa, ``False`` caso contrário.
+
+        Raises
+        ------
+        Exception
+            Para erros inesperados ao acessar o sistema de arquivos.
+
+        Notes
+        -----
+        - Caso algum critério não seja atendido, uma mensagem é registrada
+          no log explicando o motivo.
+        """
         
         try:
             chroma_path = Path(self.set_db_path) / self.chroma_dir
