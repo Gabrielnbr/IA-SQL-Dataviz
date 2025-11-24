@@ -178,6 +178,16 @@ Mitigações definidas no planejamento:
 
 ---
 
+## Testes
+
+Não manterei o sistema em produção, pois cada envio de mensagem gera tokens e custos pessoais, então manterei aqui algumas imagens que representem o funcionamento do programa.
+
+![Test 1](references/bd/test-1.png)
+
+![Test 2](references/bd/test-2.png)
+
+---
+
 # Sobre mim
 
 Olá! Meu nome é **Gabriel Nobre Galvão**, trabalho como **Ciêntista de Dados** desde 2021 e **IA Generativa** me divirto um pouco.
