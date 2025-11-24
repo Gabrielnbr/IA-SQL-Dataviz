@@ -45,7 +45,7 @@ def front():
     pergunta = st.text_input("Digite sua Pergunta")
     
     if st.button("Enviar mensagem"):
-        if not pergunta:
+        if not pergunta.strip():
             st.warning("Digite uma pergunta válida.")
         else:
             with st.spinner("Consultando a API..."):
