@@ -182,9 +182,9 @@ Mitigações definidas no planejamento:
 
 Não manterei o sistema em produção, pois cada envio de mensagem gera tokens e custos pessoais, então manterei aqui algumas imagens que representem o funcionamento do programa.
 
-![Test 1](references/bd/test-1.png)
+![Test 1](references/img/test-1.png)
 
-![Test 2](references/bd/test-2.png)
+![Test 2](references/img/test-2.png)
 
 ---
 
